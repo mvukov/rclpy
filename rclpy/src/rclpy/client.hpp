@@ -21,6 +21,7 @@
 
 #include <memory>
 
+#include "clock.hpp"
 #include "destroyable.hpp"
 #include "node.hpp"
 
@@ -45,7 +46,8 @@ public:
    * \param[in] service_name The service name
    * \param[in] pyqos rmw_qos_profile_t object for this client
    */
-  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos);
+  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+      Clock & clock);
 
   ~Client() = default;
 

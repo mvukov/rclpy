@@ -24,6 +24,7 @@
 #include <string>
 
 #include "client.hpp"
+#include "clock.hpp"
 #include "exceptions.hpp"
 #include "node.hpp"
 #include "python_allocator.hpp"
@@ -40,7 +41,8 @@ Client::destroy()
 }
 
 Client::Client(
-  Node & node, py::object pysrv_type, const char * service_name, py::object pyqos_profile)
+  Node & node, py::object pysrv_type, const char * service_name, py::object pyqos_profile,
+  Clock & clock)
 : node_(node)
 {
   auto srv_type = static_cast<rosidl_service_type_support_t *>(
@@ -50,6 +52,11 @@ Client::Client(
   }
 
   rcl_client_options_t client_ops = rcl_client_get_default_options();
+
+  if (rcl_node_get_options(node.rcl_ptr())->enable_service_introspection) {
+    client_ops.clock = clock.rcl_ptr();
+    client_ops.enable_service_introspection = true;
+  }
 
   if (!pyqos_profile.is_none()) {
     client_ops.qos = pyqos_profile.cast<rmw_qos_profile_t>();
@@ -150,7 +157,7 @@ void
 define_client(py::object module)
 {
   py::class_<Client, Destroyable, std::shared_ptr<Client>>(module, "Client")
-  .def(py::init<Node &, py::object, const char *, py::object>())
+  .def(py::init<Node &, py::object, const char *, py::object, Clock &>())
   .def_property_readonly(
     "pointer", [](const Client & client) {
       return reinterpret_cast<size_t>(client.rcl_ptr());
