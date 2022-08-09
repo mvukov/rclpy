@@ -241,7 +241,7 @@ class Node:
                 namespace='',
                 parameters=[
                     (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER, True, ParameterDescriptor()),
-                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER, True, ParameterDescriptor()),
+                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_PARAMETER, True, ParameterDescriptor()),
                     (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER, True, ParameterDescriptor()),
                     (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_EVENT_CONTENT_PARAMETER, True, ParameterDescriptor())
                 ])
@@ -1595,27 +1595,27 @@ class Node:
     def _configure_service_introspection(self, parameters: List[Parameter]):
         for param in parameters:
             if param.name == _rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER:
-                for srv in self.services:
-                    _rclpy.service_introspection.configure_service_events(
-                        srv.handle.pointer(),
-                        self.handle.pointer(),
-                        param.value)
-            elif param.name == _rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER:
-                for cli in self.clients:
+                for srv in self.clients:
                     _rclpy.service_introspection.configure_client_events(
-                        cli.handle.pointer(),
-                        self.handle.pointer(),
+                        srv.handle.pointer,
+                        self.handle.pointer,
+                        param.value)
+            elif param.name == _rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_PARAMETER:
+                for cli in self.services:
+                    ret = _rclpy.service_introspection.configure_service_events(
+                        cli.handle.pointer,
+                        self.handle.pointer,
                         param.value)
             elif param.name == _rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER:
                 for srv in self.services:
                     _rclpy.service_introspection.configure_service_message_payload(
-                        srv.handle.pointer(),
+                        srv.handle.pointer,
                         param.value)
 
             elif param.name == _rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_EVENT_CONTENT_PARAMETER:
                 for cli in self.clients:
                     _rclpy.service_introspection.configure_client_message_payload(
-                        cli.handle.pointer(),
+                        cli.handle.pointer,
                         param.value)
 
     def create_client(
@@ -1645,7 +1645,8 @@ class Node:
                     self.handle,
                     srv_type,
                     srv_name,
-                    qos_profile.get_c_qos_profile())
+                    qos_profile.get_c_qos_profile(),
+                    self._clock.handle)
         except ValueError:
             failed = True
         if failed:
