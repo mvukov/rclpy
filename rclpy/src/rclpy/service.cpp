@@ -39,11 +39,8 @@ Service::destroy()
 }
 
 Service::Service(
-  Node & node,
-  py::object pysrv_type,
-  std::string service_name,
-  py::object pyqos_profile,
-  Clock & clock)
+    Node & node, py::object pysrv_type, std::string service_name, py::object pyqos_profile,
+    Clock & clock)
 : node_(node)
 {
   auto srv_type = static_cast<rosidl_service_type_support_t *>(

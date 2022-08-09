@@ -13,20 +13,34 @@
 // limitations under the License.
 
 #include "service_introspection.hpp"
+#include <rcl/node.h>
+#include <rcl/service.h>
+#include <cstddef>
 #include "rcl/introspection.h"
 
 namespace rclpy {
 
+#include <cstdio>
 void
 define_service_introspection(py::module_ module)
 {
   py::module_ m2 = module.def_submodule("service_introspection",
       "utilities for introspecting services");
-
-  m2.def("configure_service_events", &rcl_service_introspection_configure_service_events);
-  m2.def("configure_client_events", &rcl_service_introspection_configure_client_events);
-  m2.def("configure_service_message_payload", &rcl_service_introspection_configure_service_content);
-  m2.def("configure_client_message_payload", &rcl_service_introspection_configure_client_content);
+  m2.def("configure_service_events",
+      [](size_t srv, size_t node, bool opt) {
+      fprintf(stderr, "Calling configure_service_events with srv: %ld, node: %ld, opt %d \n", srv, node, static_cast<int>(opt));
+      return rcl_service_introspection_configure_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node), opt);
+      });
+  m2.def("configure_client_events",
+      [](size_t cli, size_t node, bool opt) {
+      return rcl_service_introspection_configure_client_events(reinterpret_cast<rcl_client_t *>(cli), reinterpret_cast<rcl_node_t *>(node), opt);
+      });
+  m2.def("configure_service_message_payload", [](size_t srv, bool opt){
+        return rcl_service_introspection_configure_service_content(reinterpret_cast<rcl_service_t *>(srv), opt);
+      });
+  m2.def("configure_client_message_payload", [](size_t cli, bool opt) {
+      return rcl_service_introspection_configure_client_content(reinterpret_cast<rcl_client_t *>(cli), opt);
+      });
   m2.attr("RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER") =
     RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER;
   m2.attr("RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_PARAMETER") =
@@ -35,7 +49,6 @@ define_service_introspection(py::module_ module)
     RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_EVENT_CONTENT_PARAMETER;
   m2.attr("RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER") =
     RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER;
-
+  m2.attr("RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX") = RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX;
 } 
-
 } // namespace rclpy
