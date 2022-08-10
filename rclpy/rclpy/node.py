@@ -236,14 +236,17 @@ class Node:
             self._parameter_service = ParameterService(self)
         
         if enable_service_introspection:
-            # TODO(ihasdapie): This is so verbose...
             self.declare_parameters(
                 namespace='',
                 parameters=[
-                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER, True, ParameterDescriptor()),
-                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_PARAMETER, True, ParameterDescriptor()),
-                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER, True, ParameterDescriptor()),
-                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_EVENT_CONTENT_PARAMETER, True, ParameterDescriptor())
+                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER, #noqa E501
+                     True, ParameterDescriptor()),
+                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_PARAMETER, #noqa E501
+                     True, ParameterDescriptor()),
+                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER, #noqa E501
+                     True, ParameterDescriptor()),
+                    (_rclpy.service_introspection.RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_EVENT_CONTENT_PARAMETER, #noqa E501
+                     True, ParameterDescriptor())
                 ])
             self.add_post_set_parameters_callback(self._configure_service_introspection)
 
