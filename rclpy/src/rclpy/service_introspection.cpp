@@ -14,9 +14,10 @@
 
 #include "service_introspection.hpp"
 #include <rcl/node.h>
-#include <rcl/service.h>
 #include <cstddef>
-#include "rcl/introspection.h"
+#include "rcl/service_introspection.h"
+#include "rcl/client.h"
+#include "rcl/service.h"
 
 namespace rclpy {
 
@@ -28,18 +29,29 @@ define_service_introspection(py::module_ module)
       "utilities for introspecting services");
   m2.def("configure_service_events",
       [](size_t srv, size_t node, bool opt) {
-      fprintf(stderr, "Calling configure_service_events with srv: %ld, node: %ld, opt %d \n", srv, node, static_cast<int>(opt));
-      return rcl_service_introspection_configure_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node), opt);
+      if (opt) {
+        return rcl_service_introspection_enable_server_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node));
+      }
+      return rcl_service_introspection_disable_server_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node));
       });
   m2.def("configure_client_events",
-      [](size_t cli, size_t node, bool opt) {
-      return rcl_service_introspection_configure_client_events(reinterpret_cast<rcl_client_t *>(cli), reinterpret_cast<rcl_node_t *>(node), opt);
+      [](size_t clt, size_t node, bool opt) {
+      if (opt) {
+        return rcl_service_introspection_enable_client_service_events(reinterpret_cast<rcl_client_t *>(clt), reinterpret_cast<rcl_node_t *>(node));
+      }
+      return rcl_service_introspection_disable_client_service_events(reinterpret_cast<rcl_client_t *>(clt), reinterpret_cast<rcl_node_t *>(node));
       });
   m2.def("configure_service_message_payload", [](size_t srv, bool opt){
-        return rcl_service_introspection_configure_service_content(reinterpret_cast<rcl_service_t *>(srv), opt);
+      if (opt) {
+        return rcl_service_introspection_enable_server_service_event_message_payload(reinterpret_cast<rcl_service_t *>(srv));
+      }
+      return rcl_service_introspection_disable_server_service_event_message_payload(reinterpret_cast<rcl_service_t *>(srv));
       });
-  m2.def("configure_client_message_payload", [](size_t cli, bool opt) {
-      return rcl_service_introspection_configure_client_content(reinterpret_cast<rcl_client_t *>(cli), opt);
+  m2.def("configure_client_message_payload", [](size_t clt, bool opt) {
+      if (opt) {
+        return rcl_service_introspection_enable_client_service_event_message_payload(reinterpret_cast<rcl_client_t *>(clt));
+      } 
+      return rcl_service_introspection_disable_client_service_event_message_payload(reinterpret_cast<rcl_client_t *>(clt));
       });
   m2.attr("RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER") =
     RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER;

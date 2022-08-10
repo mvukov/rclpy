@@ -16,7 +16,7 @@
 
 #include <rcl_action/rcl_action.h>
 #include <rcl/error_handling.h>
-#include <rcl/introspection.h>
+#include <rcl/service_introspection.h>
 #include <rcl/graph.h>
 #include <rcl/types.h>
 #include <rcl_interfaces/msg/parameter_type.h>
