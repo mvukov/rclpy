@@ -56,6 +56,32 @@ public:
     py::object pysrv_type,
     std::string service_name,
     py::object pyqos_profile,
+    Clock & clock)
+    : Service(node, pysrv_type, service_name, pyqos_profile,
+        rcl_service_get_default_options().qos, clock){};
+
+  /// Create a service server
+  /**
+   * This class will create a service server for the given service name.
+   * This service will use the typesupport defined in the service module
+   * provided as pysrv_type to send messages over the wire.
+   *
+   * Raises ValueError if the capsules are not the correct types
+   * Raises RCLError if the service could not be created
+   *
+   * \param[in] node Node to add the service to
+   * \param[in] pysrv_type Service module associated with the service
+   * \param[in] service_name Python object for the service name
+   * \param[in] pyqos_srv_profile QoSProfile Python object for this service
+   * \param[in] pyqos_service_event_pub QoSProfile Python object for the service event publisher
+   * \return capsule containing the rcl_service_t
+   */
+  Service(
+    Node & node,
+    py::object pysrv_type,
+    std::string service_name,
+    py::object pyqos_srv_profile,
+    py::object pyqos_service_event_pub,
     Clock & clock);
 
   Service(
@@ -107,6 +133,14 @@ public:
   destroy() override;
 
 private:
+  Service(
+    Node & node,
+    py::object pysrv_type,
+    std::string service_name,
+    py::object pyqos_srv_profile,
+    rmw_qos_profile_t service_event_publisher_qos,
+    Clock & clock);
+
   Node node_;
   std::shared_ptr<rcl_service_t> rcl_service_;
 };

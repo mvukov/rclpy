@@ -40,9 +40,23 @@ Client::destroy()
   node_.destroy();
 }
 
+Client::Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+    py::object pyqos_service_event_pub, Clock & clock)
+: node_(node)
+{
+  if (!pyqos_service_event_pub.is_none()) {
+    auto service_event_publisher_qos = pyqos_service_event_pub.cast<rmw_qos_profile_t>();
+    Client(node, pysrv_type, service_name, pyqos,
+        service_event_publisher_qos, clock);
+  } else{
+    Client(node, pysrv_type, service_name, pyqos,
+        rcl_publisher_get_default_options().qos, clock);
+  }
+}
+
 Client::Client(
   Node & node, py::object pysrv_type, const char * service_name, py::object pyqos_profile,
-  Clock & clock)
+  rmw_qos_profile_t pyqos_service_event_pub, Clock & clock)
 : node_(node)
 {
   auto srv_type = static_cast<rosidl_service_type_support_t *>(
@@ -56,6 +70,7 @@ Client::Client(
   if (rcl_node_get_options(node.rcl_ptr())->enable_service_introspection) {
     client_ops.clock = clock.rcl_ptr();
     client_ops.enable_service_introspection = true;
+    client_ops.event_publisher_options.qos = pyqos_service_event_pub;
   }
 
   if (!pyqos_profile.is_none()) {
@@ -158,6 +173,7 @@ define_client(py::object module)
 {
   py::class_<Client, Destroyable, std::shared_ptr<Client>>(module, "Client")
   .def(py::init<Node &, py::object, const char *, py::object, Clock &>())
+  .def(py::init<Node &, py::object, const char *, py::object, py::object, Clock &>())
   .def_property_readonly(
     "pointer", [](const Client & client) {
       return reinterpret_cast<size_t>(client.rcl_ptr());

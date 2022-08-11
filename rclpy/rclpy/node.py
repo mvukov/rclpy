@@ -66,6 +66,7 @@ from rclpy.parameter_service import ParameterService
 from rclpy.publisher import Publisher
 from rclpy.qos import qos_profile_parameter_events
 from rclpy.qos import qos_profile_services_default
+from rclpy.qos import qos_profile_system_default
 from rclpy.qos import QoSProfile
 from rclpy.qos_event import PublisherEventCallbacks
 from rclpy.qos_event import SubscriptionEventCallbacks
@@ -1627,6 +1628,7 @@ class Node:
         srv_name: str,
         *,
         qos_profile: QoSProfile = qos_profile_services_default,
+        service_event_qos_profile: QoSProfile = qos_profile_system_default,
         callback_group: CallbackGroup = None
     ) -> Client:
         """
@@ -1635,6 +1637,8 @@ class Node:
         :param srv_type: The service type.
         :param srv_name: The name of the service.
         :param qos_profile: The quality of service profile to apply the service client.
+        :param service_event_publisher_qos_profile: The quality of service
+            profile to apply the service event publisher.
         :param callback_group: The callback group for the service client. If ``None``, then the
             nodes default callback group is used.
         """
@@ -1649,6 +1653,7 @@ class Node:
                     srv_type,
                     srv_name,
                     qos_profile.get_c_qos_profile(),
+                    service_event_qos_profile.get_c_qos_profile(),
                     self._clock.handle)
         except ValueError:
             failed = True
@@ -1671,6 +1676,7 @@ class Node:
         callback: Callable[[SrvTypeRequest, SrvTypeResponse], SrvTypeResponse],
         *,
         qos_profile: QoSProfile = qos_profile_services_default,
+        service_event_qos_profile: QoSProfile = qos_profile_system_default,
         callback_group: CallbackGroup = None
     ) -> Service:
         """
@@ -1681,6 +1687,8 @@ class Node:
         :param callback: A user-defined callback function that is called when a service request
             received by the server.
         :param qos_profile: The quality of service profile to apply the service server.
+        :param service_event_publisher_qos_profile: The quality of service
+            profile to apply the service event publisher.
         :param callback_group: The callback group for the service server. If ``None``, then the
             nodes default callback group is used.
         """
@@ -1695,6 +1703,7 @@ class Node:
                     srv_type,
                     srv_name,
                     qos_profile.get_c_qos_profile(),
+                    service_event_qos_profile.get_c_qos_profile(),
                     self._clock.handle)
         except ValueError:
             failed = True

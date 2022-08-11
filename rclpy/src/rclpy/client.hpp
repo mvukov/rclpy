@@ -18,6 +18,7 @@
 #include <pybind11/pybind11.h>
 
 #include <rcl/client.h>
+#include <rmw/types.h>
 
 #include <memory>
 
@@ -44,10 +45,32 @@ public:
    * \param[in] node Node to add the client to
    * \param[in] pysrv_type Service module associated with the client
    * \param[in] service_name The service name
-   * \param[in] pyqos rmw_qos_profile_t object for this client
+   * \param[in] pyqos QoSProfile python object for this client
+   * \param[in] clock Clock to use for service event timestamps
    */
   Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
-      Clock & clock);
+      Clock & clock)
+    : Client(node, pysrv_type, service_name, pyqos, rcl_publisher_get_default_options().qos,
+        clock){};
+
+  /// Create a client
+  /**
+   * This function will create a client for the given service name.
+   * This client will use the typesupport defined in the service module
+   * provided as pysrv_type to send messages.
+   *
+   * Raises ValueError if the capsules are not the correct types
+   * Raises RuntimeError if the client could not be created
+   *
+   * \param[in] node Node to add the client to
+   * \param[in] pysrv_type Service module associated with the client
+   * \param[in] service_name The service name
+   * \param[in] pyqos QoSProfile python object for this client
+   * \param[in] pyqos_service_event_pub QoSProfile python object for the service event publisher
+   * \param[in] clock Clock to use for service event timestamps
+   */
+  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+      py::object pyqos_service_event_pub, Clock & clock);
 
   ~Client() = default;
 
@@ -93,6 +116,8 @@ public:
   destroy() override;
 
 private:
+  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+      rmw_qos_profile_t pyqos_service_event_pub, Clock & clock);
   Node node_;
   std::shared_ptr<rcl_client_t> rcl_client_;
 };

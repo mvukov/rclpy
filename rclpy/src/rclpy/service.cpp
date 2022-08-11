@@ -39,8 +39,23 @@ Service::destroy()
 }
 
 Service::Service(
-    Node & node, py::object pysrv_type, std::string service_name, py::object pyqos_profile,
-    Clock & clock)
+    Node & node, py::object pysrv_type, std::string service_name, py::object pyqos_srv_profile,
+    py::object pyqos_service_event_pub, Clock & clock)
+: node_(node)
+{
+  if (!pyqos_service_event_pub.is_none()) {
+    auto service_event_publisher_qos = pyqos_service_event_pub.cast<rmw_qos_profile_t>();
+    Service(node, pysrv_type, service_name, pyqos_srv_profile,
+        service_event_publisher_qos, clock);
+  } else{
+    Service(node, pysrv_type, service_name, pyqos_srv_profile,
+        rcl_publisher_get_default_options().qos, clock);
+  }
+}
+
+Service::Service(
+    Node & node, py::object pysrv_type, std::string service_name, py::object pyqos_srv_profile,
+    rmw_qos_profile_t service_event_publisher_qos, Clock & clock)
 : node_(node)
 {
   auto srv_type = static_cast<rosidl_service_type_support_t *>(
@@ -54,10 +69,11 @@ Service::Service(
   if (rcl_node_get_options(node.rcl_ptr())->enable_service_introspection) {
     service_ops.clock = clock.rcl_ptr();
     service_ops.enable_service_introspection = true;
+    service_ops.event_publisher_options.qos = service_event_publisher_qos;
   }
 
-  if (!pyqos_profile.is_none()) {
-    service_ops.qos = pyqos_profile.cast<rmw_qos_profile_t>();
+  if (!pyqos_srv_profile.is_none()) {
+    service_ops.qos = pyqos_srv_profile.cast<rmw_qos_profile_t>();
   }
 
   // Create a service
@@ -155,6 +171,7 @@ define_service(py::object module)
 {
   py::class_<Service, Destroyable, std::shared_ptr<Service>>(module, "Service")
   .def(py::init<Node &, py::object, std::string, py::object, Clock &>())
+  .def(py::init<Node &, py::object, std::string, py::object, py::object, Clock &>())
   .def_property_readonly(
     "pointer", [](const Service & service) {
       return reinterpret_cast<size_t>(service.rcl_ptr());
