@@ -29,29 +29,17 @@ define_service_introspection(py::module_ module)
       "utilities for introspecting services");
   m2.def("configure_service_events",
       [](size_t srv, size_t node, bool opt) {
-      if (opt) {
-        return rcl_service_introspection_enable_server_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node));
-      }
-      return rcl_service_introspection_disable_server_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node));
+      return rcl_service_introspection_configure_server_service_events(reinterpret_cast<rcl_service_t *>(srv), reinterpret_cast<rcl_node_t *>(node), opt);
       });
   m2.def("configure_client_events",
       [](size_t clt, size_t node, bool opt) {
-      if (opt) {
-        return rcl_service_introspection_enable_client_service_events(reinterpret_cast<rcl_client_t *>(clt), reinterpret_cast<rcl_node_t *>(node));
-      }
-      return rcl_service_introspection_disable_client_service_events(reinterpret_cast<rcl_client_t *>(clt), reinterpret_cast<rcl_node_t *>(node));
+      return rcl_service_introspection_configure_client_service_events(reinterpret_cast<rcl_client_t *>(clt), reinterpret_cast<rcl_node_t *>(node), opt);
       });
   m2.def("configure_service_message_payload", [](size_t srv, bool opt){
-      if (opt) {
-        return rcl_service_introspection_enable_server_service_event_message_payload(reinterpret_cast<rcl_service_t *>(srv));
-      }
-      return rcl_service_introspection_disable_server_service_event_message_payload(reinterpret_cast<rcl_service_t *>(srv));
+      return rcl_service_introspection_configure_server_service_event_message_payload(reinterpret_cast<rcl_service_t *>(srv), opt);
       });
   m2.def("configure_client_message_payload", [](size_t clt, bool opt) {
-      if (opt) {
-        return rcl_service_introspection_enable_client_service_event_message_payload(reinterpret_cast<rcl_client_t *>(clt));
-      } 
-      return rcl_service_introspection_disable_client_service_event_message_payload(reinterpret_cast<rcl_client_t *>(clt));
+      return rcl_service_introspection_configure_client_service_event_message_payload(reinterpret_cast<rcl_client_t *>(clt), opt);
       });
   m2.attr("RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER") =
     RCL_SERVICE_INTROSPECTION_PUBLISH_CLIENT_PARAMETER;
