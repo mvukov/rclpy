@@ -40,27 +40,12 @@ Service::destroy()
 
 Service::Service(
     Node & node, py::object pysrv_type, std::string service_name, py::object pyqos_srv_profile,
-    py::object pyqos_service_event_pub, Clock & clock)
-: node_(node)
-{
-  if (!pyqos_service_event_pub.is_none()) {
-    auto service_event_publisher_qos = pyqos_service_event_pub.cast<rmw_qos_profile_t>();
-    Service(node, pysrv_type, service_name, pyqos_srv_profile,
-        service_event_publisher_qos, clock);
-  } else{
-    Service(node, pysrv_type, service_name, pyqos_srv_profile,
-        rcl_publisher_get_default_options().qos, clock);
-  }
-}
-
-Service::Service(
-    Node & node, py::object pysrv_type, std::string service_name, py::object pyqos_srv_profile,
     rmw_qos_profile_t service_event_publisher_qos, Clock & clock)
 : node_(node)
 {
-  auto srv_type = static_cast<rosidl_service_type_support_t *>(
+  auto *srv_type = static_cast<rosidl_service_type_support_t *>(
     common_get_type_support(pysrv_type));
-  if (!srv_type) {
+  if (nullptr == srv_type) {
     throw py::error_already_set();
   }
 

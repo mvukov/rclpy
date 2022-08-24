@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 
 #include "client.hpp"
 #include "clock.hpp"
@@ -40,28 +41,15 @@ Client::destroy()
   node_.destroy();
 }
 
-Client::Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
-    py::object pyqos_service_event_pub, Clock & clock)
-: node_(node)
-{
-  if (!pyqos_service_event_pub.is_none()) {
-    auto service_event_publisher_qos = pyqos_service_event_pub.cast<rmw_qos_profile_t>();
-    Client(node, pysrv_type, service_name, pyqos,
-        service_event_publisher_qos, clock);
-  } else{
-    Client(node, pysrv_type, service_name, pyqos,
-        rcl_publisher_get_default_options().qos, clock);
-  }
-}
-
 Client::Client(
   Node & node, py::object pysrv_type, const char * service_name, py::object pyqos_profile,
   rmw_qos_profile_t pyqos_service_event_pub, Clock & clock)
 : node_(node)
 {
+
   auto srv_type = static_cast<rosidl_service_type_support_t *>(
     common_get_type_support(pysrv_type));
-  if (!srv_type) {
+  if (nullptr == srv_type) {
     throw py::error_already_set();
   }
 

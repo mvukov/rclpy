@@ -21,6 +21,7 @@
 #include <rmw/types.h>
 
 #include <memory>
+#include <utility>
 
 #include "clock.hpp"
 #include "destroyable.hpp"
@@ -50,8 +51,9 @@ public:
    */
   Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
       Clock & clock)
-    : Client(node, pysrv_type, service_name, pyqos, rcl_publisher_get_default_options().qos,
-        clock){};
+    : Client(
+        node, std::move(pysrv_type), service_name, std::move(pyqos),
+        rcl_publisher_get_default_options().qos, clock){}
 
   /// Create a client
   /**
@@ -70,7 +72,11 @@ public:
    * \param[in] clock Clock to use for service event timestamps
    */
   Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
-      py::object pyqos_service_event_pub, Clock & clock);
+      py::object pyqos_service_event_pub, Clock & clock)
+    : Client(
+        node, std::move(pysrv_type), service_name, std::move(pyqos),
+        pyqos_service_event_pub.is_none() ? rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
+        clock){}
 
   ~Client() = default;
 
