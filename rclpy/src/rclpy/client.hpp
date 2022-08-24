@@ -49,11 +49,12 @@ public:
    * \param[in] pyqos QoSProfile python object for this client
    * \param[in] clock Clock to use for service event timestamps
    */
-  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
-      Clock & clock)
-    : Client(
-        node, std::move(pysrv_type), service_name, std::move(pyqos),
-        rcl_publisher_get_default_options().qos, clock){}
+  Client(
+    Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+    Clock & clock)
+  : Client(
+      node, std::move(pysrv_type), service_name, std::move(pyqos),
+      rcl_publisher_get_default_options().qos, clock) {}
 
   /// Create a client
   /**
@@ -71,12 +72,13 @@ public:
    * \param[in] pyqos_service_event_pub QoSProfile python object for the service event publisher
    * \param[in] clock Clock to use for service event timestamps
    */
-  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
-      py::object pyqos_service_event_pub, Clock & clock)
-    : Client(
-        node, std::move(pysrv_type), service_name, std::move(pyqos),
-        pyqos_service_event_pub.is_none() ? rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
-        clock){}
+  Client(
+    Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+    py::object pyqos_service_event_pub, Clock & clock)
+  : Client(
+      node, std::move(pysrv_type), service_name, std::move(pyqos),
+      pyqos_service_event_pub.is_none() ? rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
+      clock) {}
 
   ~Client() = default;
 
@@ -122,8 +124,9 @@ public:
   destroy() override;
 
 private:
-  Client(Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
-      rmw_qos_profile_t pyqos_service_event_pub, Clock & clock);
+  Client(
+    Node & node, py::object pysrv_type, const char * service_name, py::object pyqos,
+    rmw_qos_profile_t pyqos_service_event_pub, Clock & clock);
   Node node_;
   std::shared_ptr<rcl_client_t> rcl_client_;
 };

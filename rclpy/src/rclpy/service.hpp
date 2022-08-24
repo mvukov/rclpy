@@ -58,9 +58,9 @@ public:
     std::string service_name,
     py::object pyqos_profile,
     Clock & clock)
-    : Service(
-        node, std::move(pysrv_type), std::move(service_name), std::move(pyqos_profile),
-        rcl_service_get_default_options().qos, clock){}
+  : Service(
+      node, std::move(pysrv_type), std::move(service_name), std::move(pyqos_profile),
+      rcl_service_get_default_options().qos, clock) {}
 
   /// Create a service server
   /**
@@ -85,10 +85,10 @@ public:
     py::object pyqos_srv_profile,
     py::object pyqos_service_event_pub,
     Clock & clock)
-    : Service(
-        node, std::move(pysrv_type), std::move(service_name), std::move(pyqos_srv_profile),
-        pyqos_service_event_pub.is_none() ? rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
-        clock){}
+  : Service(
+      node, std::move(pysrv_type), std::move(service_name), std::move(pyqos_srv_profile),
+      pyqos_service_event_pub.is_none() ? rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
+      clock) {}
 
   Service(
     Node & node, std::shared_ptr<rcl_service_t> rcl_service);

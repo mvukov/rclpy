@@ -19,7 +19,8 @@
 
 namespace py = pybind11;
 
-namespace rclpy {
+namespace rclpy
+{
 
 void
 define_service_introspection(py::module_ module);
