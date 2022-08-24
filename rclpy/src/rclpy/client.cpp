@@ -46,7 +46,6 @@ Client::Client(
   rmw_qos_profile_t pyqos_service_event_pub, Clock & clock)
 : node_(node)
 {
-
   auto srv_type = static_cast<rosidl_service_type_support_t *>(
     common_get_type_support(pysrv_type));
   if (nullptr == srv_type) {

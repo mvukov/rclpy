@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "service_introspection.hpp"
-#include <rcl/node.h>
 #include <cstddef>
+
+#include "service_introspection.hpp"
 #include "rcl/service_introspection.h"
 #include "rcl/client.h"
+#include "rcl/node.h"
 #include "rcl/service.h"
 
 namespace rclpy
 {
 
-#include <cstdio>
 void
 define_service_introspection(py::module_ module)
 {
@@ -44,7 +44,7 @@ define_service_introspection(py::module_ module)
         *>(clt), reinterpret_cast<rcl_node_t *>(node), opt);
     });
   m2.def(
-    "configure_service_message_payload", [](size_t srv, bool opt){
+    "configure_service_message_payload", [](size_t srv, bool opt) {
       return rcl_service_introspection_configure_server_service_event_message_payload(
         reinterpret_cast<rcl_service_t *>(srv), opt);
     });
@@ -63,4 +63,4 @@ define_service_introspection(py::module_ module)
     RCL_SERVICE_INTROSPECTION_PUBLISH_SERVICE_EVENT_CONTENT_PARAMETER;
   m2.attr("RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX") = RCL_SERVICE_INTROSPECTION_TOPIC_POSTFIX;
 }
-} // namespace rclpy
+}  // namespace rclpy

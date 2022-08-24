@@ -12,111 +12,171 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import platform
-import time
+from typing import List
 import unittest
 
 import rclpy
 import rclpy.executors
 from rclpy.parameter import Parameter
-from rclpy.parameter_client import AsyncParameterClient
-
-from test_msgs.srv import BasicTypes
 from service_msgs.msg import ServiceEventInfo
+from test_msgs.srv import BasicTypes
 
-import rclpy
 
+class TestServiceEvents(unittest.TestCase):
 
-class TestClient(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.context = rclpy.context.Context()
-        rclpy.init(context=cls.context)
-        cls.node = rclpy.create_node(
-            'TestClient', context=cls.context, enable_service_introspection=True)
+    def setUp(self):
+        self.context = rclpy.context.Context()
+        rclpy.init(context=self.context)
+        self.node = rclpy.create_node(
+            'TestClient', context=self.context, enable_service_introspection=True)
+        self.executor = rclpy.executors.SingleThreadedExecutor(context=self.context)
+        self.executor.add_node(self.node)
+        self.srv = self.node.create_service(BasicTypes, 'test_service', self.srv_callback)
+        self.cli = self.node.create_client(BasicTypes, 'test_service')
+        self.sub = self.node.create_subscription(BasicTypes.Event, 'test_service/_service_event',
+                                                 self.sub_callback, 10)
+        self.event_messages: List[BasicTypes.Event] = []
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.node.destroy_node()
-        rclpy.shutdown(context=cls.context)
+    def tearDown(self):
+        self.node.destroy_node()
+        rclpy.shutdown(context=self.context)
+
+    def sub_callback(self, msg):
+        self.event_messages.append(msg)
+
+    def srv_callback(self, req, resp):
+        resp.bool_value = not req.bool_value
+        resp.int64_value = req.int64_value
+        return resp
 
     def test_service_introspection_nominal(self):
-        event_messages = []
-
-        def callback(msg):
-            event_messages.append(msg)
-
-        def srv_callback(req, resp):
-            resp.bool_value = not req.bool_value
-            resp.int64_value = req.int64_value
-            return resp
-
-        srv = self.node.create_service(BasicTypes, 'test_service', callback=srv_callback)
-        cli = self.node.create_client(BasicTypes, 'test_service')
-        sub = self.node.create_subscription(BasicTypes.Event, 'test_service/_service_event',
-                                            callback, 10)
         req = BasicTypes.Request()
         req.bool_value = False
         req.int64_value = 12345
 
-        future = cli.call_async(req)
-        executor = rclpy.executors.SingleThreadedExecutor(context=self.context)
-        rclpy.spin_until_future_complete(self.node, future, executor=executor)
-        
-        # Wait for the service event to be published (this screams flaky...)
-        # for i in range(10):
-        rclpy.spin_once(self.node, executor=executor)
-        rclpy.spin_once(self.node, executor=executor)
-        rclpy.spin_once(self.node, executor=executor)
-        rclpy.spin_once(self.node, executor=executor)
-        rclpy.spin_once(self.node, executor=executor)
-        rclpy.spin_once(self.node, executor=executor)
-        rclpy.spin_once(self.node, executor=executor)
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
 
-        self.assertEqual(len(event_messages), 4)
-        self.assertEqual(event_messages[0].info.event_type, ServiceEventInfo.REQUEST_SENT)
-        self.assertEqual(event_messages[1].info.event_type, ServiceEventInfo.REQUEST_RECEIVED)
-        self.assertEqual(event_messages[2].info.event_type, ServiceEventInfo.RESPONSE_SENT)
-        self.assertEqual(event_messages[3].info.event_type, ServiceEventInfo.RESPONSE_RECEIVED)
-        self.assertEqual(event_messages[0].request[0].bool_value, False)
-        self.assertEqual(event_messages[0].request[0].int64_value, 12345)
-        self.assertEqual(event_messages[3].response[0].bool_value, True)
-        self.assertEqual(event_messages[3].response[0].int64_value, 12345)
+        # Wait for the service event messages to be published (this screams flaky...)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+
+        self.assertEqual(len(self.event_messages), 4)
+        result_dict = {}
+        for msg in self.event_messages:
+            result_dict[msg.info.event_type] = msg
+        self.assertEqual(
+            set(result_dict.keys()),
+            {ServiceEventInfo.REQUEST_SENT, ServiceEventInfo.REQUEST_RECEIVED,
+             ServiceEventInfo.RESPONSE_SENT, ServiceEventInfo.RESPONSE_RECEIVED})
+        self.assertEqual(result_dict[ServiceEventInfo.REQUEST_SENT].request[0].int64_value, 12345)
+        self.assertEqual(result_dict[ServiceEventInfo.REQUEST_SENT].request[0].bool_value, False)
+        self.assertEqual(result_dict[ServiceEventInfo.RESPONSE_SENT].response[0].bool_value, True)
+        self.assertEqual(
+            result_dict[ServiceEventInfo.RESPONSE_RECEIVED].response[0].int64_value, 12345)
 
     def test_enable_disable_service_events(self):
-        event_messages = []
-
-        def callback(msg):
-            event_messages.append(msg)
-
-        def srv_callback(req, resp):
-            resp.bool_value = not req.bool_value
-            resp.int64_value = req.int64_value
-            return resp
-
-        executor = rclpy.executors.SingleThreadedExecutor(context=self.context)
-        srv = self.node.create_service(BasicTypes, 'test_service', callback=srv_callback)
-        cli = self.node.create_client(BasicTypes, 'test_service')
-        sub = self.node.create_subscription(BasicTypes.Event, 'test_service/_service_event',
-                                            callback, 10)
         req = BasicTypes.Request()
         req.bool_value = False
         req.int64_value = 12345
 
         self.node.set_parameters([
             Parameter('publish_service_events', Parameter.Type.BOOL, False),
-            Parameter('publish_client_events', Parameter.Type.BOOL, False), ])
+            Parameter('publish_client_events', Parameter.Type.BOOL, False)])
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+        self.assertEqual(len(self.event_messages), 0)
 
-        future = cli.call_async(req)
-        for i in range(4):
-            rclpy.spin_once(self.node, executor=executor)
-        self.assertEqual(len(event_messages), 2)
+        self.event_messages = []
+        result_dict = {}
+        self.node.set_parameters([
+            Parameter('publish_service_events', Parameter.Type.BOOL, True),
+            Parameter('publish_client_events', Parameter.Type.BOOL, False)])
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+        self.assertEqual(len(self.event_messages), 2)
+        for msg in self.event_messages:
+            result_dict[msg.info.event_type] = msg
+        self.assertEqual(
+            set(result_dict.keys()),
+            {ServiceEventInfo.REQUEST_RECEIVED, ServiceEventInfo.RESPONSE_SENT})
+        self.assertEqual(len(result_dict[ServiceEventInfo.REQUEST_RECEIVED].response), 0)
+        self.assertEqual(len(result_dict[ServiceEventInfo.RESPONSE_SENT].response), 1)
+        self.assertEqual(result_dict[ServiceEventInfo.RESPONSE_SENT].response[0].bool_value, True)
 
-
+        self.event_messages = []
+        result_dict = {}
+        self.node.set_parameters([
+            Parameter('publish_service_events', Parameter.Type.BOOL, False),
+            Parameter('publish_client_events', Parameter.Type.BOOL, True)])
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+        self.assertEqual(len(self.event_messages), 2)
+        for msg in self.event_messages:
+            result_dict[msg.info.event_type] = msg
+        self.assertEqual(
+            set(result_dict.keys()),
+            {ServiceEventInfo.REQUEST_SENT, ServiceEventInfo.RESPONSE_RECEIVED})
+        self.assertEqual(len(result_dict[ServiceEventInfo.REQUEST_SENT].response), 0)
+        self.assertEqual(len(result_dict[ServiceEventInfo.RESPONSE_RECEIVED].response), 1)
+        self.assertEqual(result_dict[ServiceEventInfo.REQUEST_SENT].request[0].bool_value, False)
 
     def test_enable_disable_service_event_payload(self):
-        pass
+        req = BasicTypes.Request()
+        req.bool_value = False
+        req.int64_value = 12345
 
+        self.node.set_parameters([
+            Parameter('publish_service_content', Parameter.Type.BOOL, False),
+            Parameter('publish_client_content', Parameter.Type.BOOL, False)])
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+        self.assertEqual(len(self.event_messages), 4)
+        for i in self.event_messages:
+            self.assertEqual(len(i.request), 0)
+            self.assertEqual(len(i.response), 0)
+
+        self.event_messages = []
+        self.node.set_parameters([
+            Parameter('publish_service_content', Parameter.Type.BOOL, True),
+            Parameter('publish_client_content', Parameter.Type.BOOL, False)])
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+        self.assertEqual(len(self.event_messages), 4)
+        for i in self.event_messages:
+            if i.info.event_type == ServiceEventInfo.REQUEST_RECEIVED:
+                self.assertEqual(len(i.request), 1)
+            elif (i.info.event_type == ServiceEventInfo.RESPONSE_SENT):
+                self.assertEqual(len(i.response), 1)
+            else:
+                self.assertEqual(len(i.request) + len(i.response), 0)
+
+        self.event_messages = []
+        self.node.set_parameters([
+            Parameter('publish_service_content', Parameter.Type.BOOL, False),
+            Parameter('publish_client_content', Parameter.Type.BOOL, True)])
+        future = self.cli.call_async(req)
+        self.executor.spin_until_future_complete(future)
+        for _ in range(10):
+            self.executor.spin_once(0.1)
+        self.assertEqual(len(self.event_messages), 4)
+        for i in self.event_messages:
+            if i.info.event_type == ServiceEventInfo.REQUEST_SENT:
+                self.assertEqual(len(i.request), 1)
+            elif (i.info.event_type == ServiceEventInfo.RESPONSE_RECEIVED):
+                self.assertEqual(len(i.response), 1)
+            else:
+                self.assertEqual(len(i.request) + len(i.response), 0)
 
 
 if __name__ == '__main__':

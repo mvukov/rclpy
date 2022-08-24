@@ -77,7 +77,8 @@ public:
     py::object pyqos_service_event_pub, Clock & clock)
   : Client(
       node, std::move(pysrv_type), service_name, std::move(pyqos),
-      pyqos_service_event_pub.is_none() ? rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
+      pyqos_service_event_pub.is_none() ?
+      rcl_publisher_get_default_options().qos : pyqos_service_event_pub.cast<rmw_qos_profile_t>(),
       clock) {}
 
   ~Client() = default;

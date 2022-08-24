@@ -25,5 +25,5 @@ namespace rclpy
 void
 define_service_introspection(py::module_ module);
 
-} // namespace rclpy
-#endif // RCLPY__SERVICE_INTROSPECTION_HPP_
+}  // namespace rclpy
+#endif  // RCLPY__SERVICE_INTROSPECTION_HPP_
