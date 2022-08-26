@@ -58,8 +58,7 @@ class TestServiceEvents(unittest.TestCase):
         self.executor.spin_until_future_complete(future)
 
         # Wait for the service event messages to be published (this screams flaky...)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(1.0)
 
         self.assertEqual(len(self.event_messages), 4)
         result_dict = {}
@@ -85,19 +84,17 @@ class TestServiceEvents(unittest.TestCase):
             Parameter('publish_client_events', Parameter.Type.BOOL, False)])
         future = self.cli.call_async(req)
         self.executor.spin_until_future_complete(future)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(1.0)
         self.assertEqual(len(self.event_messages), 0)
 
-        self.event_messages = []
+        self.event_messages = [] # spin until container size?
         result_dict = {}
         self.node.set_parameters([
             Parameter('publish_service_events', Parameter.Type.BOOL, True),
             Parameter('publish_client_events', Parameter.Type.BOOL, False)])
         future = self.cli.call_async(req)
         self.executor.spin_until_future_complete(future)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(1.0)
         self.assertEqual(len(self.event_messages), 2)
         for msg in self.event_messages:
             result_dict[msg.info.event_type] = msg
@@ -115,8 +112,7 @@ class TestServiceEvents(unittest.TestCase):
             Parameter('publish_client_events', Parameter.Type.BOOL, True)])
         future = self.cli.call_async(req)
         self.executor.spin_until_future_complete(future)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(1.0)
         self.assertEqual(len(self.event_messages), 2)
         for msg in self.event_messages:
             result_dict[msg.info.event_type] = msg
@@ -137,8 +133,7 @@ class TestServiceEvents(unittest.TestCase):
             Parameter('publish_client_content', Parameter.Type.BOOL, False)])
         future = self.cli.call_async(req)
         self.executor.spin_until_future_complete(future)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(1.0)
         self.assertEqual(len(self.event_messages), 4)
         for i in self.event_messages:
             self.assertEqual(len(i.request), 0)
@@ -150,8 +145,7 @@ class TestServiceEvents(unittest.TestCase):
             Parameter('publish_client_content', Parameter.Type.BOOL, False)])
         future = self.cli.call_async(req)
         self.executor.spin_until_future_complete(future)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(0.1)
         self.assertEqual(len(self.event_messages), 4)
         for i in self.event_messages:
             if i.info.event_type == ServiceEventInfo.REQUEST_RECEIVED:
@@ -167,8 +161,7 @@ class TestServiceEvents(unittest.TestCase):
             Parameter('publish_client_content', Parameter.Type.BOOL, True)])
         future = self.cli.call_async(req)
         self.executor.spin_until_future_complete(future)
-        for _ in range(10):
-            self.executor.spin_once(0.1)
+        self.executor.spin_some(1.0)
         self.assertEqual(len(self.event_messages), 4)
         for i in self.event_messages:
             if i.info.event_type == ServiceEventInfo.REQUEST_SENT:
