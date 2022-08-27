@@ -25,6 +25,7 @@
 #include <string>
 
 #include "action_client.hpp"
+#include "clock.hpp"
 #include "exceptions.hpp"
 #include "node.hpp"
 #include "utils.hpp"
@@ -41,6 +42,7 @@ ActionClient::destroy()
 
 ActionClient::ActionClient(
   Node & node,
+  const rclpy::Clock & rclpy_clock,
   py::object pyaction_type,
   const char * action_name,
   const rmw_qos_profile_t & goal_service_qos,
@@ -86,6 +88,7 @@ ActionClient::ActionClient(
   rcl_ret_t ret = rcl_action_client_init(
     rcl_action_client_.get(),
     node_.rcl_ptr(),
+    rclpy_clock.rcl_ptr(),
     ts,
     action_name,
     &action_client_ops);
@@ -274,7 +277,7 @@ define_action_client(py::object module)
 {
   py::class_<ActionClient, Destroyable, std::shared_ptr<ActionClient>>(module, "ActionClient")
   .def(
-    py::init<Node &, py::object, const char *, const rmw_qos_profile_t &,
+    py::init<Node &, const rclpy::Clock &, py::object, const char *, const rmw_qos_profile_t &,
     const rmw_qos_profile_t &, const rmw_qos_profile_t &,
     const rmw_qos_profile_t &, const rmw_qos_profile_t &>())
   .def_property_readonly(

@@ -152,6 +152,7 @@ class ActionClient(Waitable):
         with node.handle:
             self._client_handle = _rclpy.ActionClient(
                 node.handle,
+                node.get_clock().handle,
                 action_type,
                 action_name,
                 goal_service_qos_profile.get_c_qos_profile(),
