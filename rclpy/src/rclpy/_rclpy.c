@@ -53,7 +53,7 @@ static PyObject * RCLInvalidROSArgsError;
 static PyObject * UnknownROSArgsError;
 static PyObject * UnsupportedEventTypeError;
 
-#include "./_rclpy_qos_event.c"
+#include "rclpy/src/rclpy/_rclpy_qos_event.h"
 
 void
 _rclpy_context_handle_destructor(void * p)
